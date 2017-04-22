@@ -252,6 +252,8 @@ const char *cclassStr(uint8 cc)
 		return "DOOR LOCK";
 	case 0x63:
 		return "USER CODE";
+	case 0x66:
+		return "BARRIER OPERATOR";
 	case 0x70:
 		return "CONFIGURATION";
 	case 0x71:
@@ -1229,6 +1231,8 @@ bool COpenZWave::SwitchLight(const int nodeID, const int instanceID, const int c
 			bFound = (GetValueByCommandClass(nodeID, instanceID, COMMAND_CLASS_DOOR_LOCK, vID) == true);
 		if (!bFound)
 			bFound = (GetValueByCommandClassLabel(nodeID, instanceID, COMMAND_CLASS_SWITCH_MULTILEVEL, "Level", vID) == true);
+		if (!bFound)
+			bFound = (GetValueByCommandClass(nodeID, instanceID, COMMAND_CLASS_BARRIER, vID) == true);
 		if (bFound)
 		{
 			OpenZWave::ValueID::ValueType vType = vID.GetType();
@@ -1237,13 +1241,17 @@ bool COpenZWave::SwitchLight(const int nodeID, const int instanceID, const int c
 			{
 				if (svalue == 0) {
 					//Off
+			_log.Log(LOG_NORM, "OpenZWave: Domoticz has send an OFF Switch command! NodeID: %d (FALSE) Command: 0x%02x", nodeID,commandClass);
 					m_pManager->SetValue(vID, false);
-					pDevice->intvalue = 0;
+					if (commandClass != COMMAND_CLASS_BARRIER)
+						pDevice->intvalue = 0;
 				}
 				else {
 					//On
+			_log.Log(LOG_NORM, "OpenZWave: Domoticz has send an ON Switch command! NodeID: %d (TRUE)  Command: 0x%02x", nodeID, commandClass);
 					m_pManager->SetValue(vID, true);
-					pDevice->intvalue = 255;
+					if (commandClass != COMMAND_CLASS_BARRIER)
+						pDevice->intvalue = 255;
 				}
 			}
 			else
@@ -2217,6 +2225,35 @@ void COpenZWave::AddValue(const OpenZWave::ValueID &vID, const NodeInfo *pNodeIn
 			}
 		}
 	}
+	else if (commandclass == COMMAND_CLASS_BARRIER) 
+	{
+
+                if (vLabel == "Open" ) 
+                {
+			// We are going to define a Domoticz Control for the Garage opener
+			_device.devType = ZDTYPE_SWITCH_NORMAL;
+
+
+                        if (m_pManager->GetValueAsBool(vID, &bValue) == true)
+                        {
+                                if (bValue == true)
+                                        _device.intvalue = 255;
+                                else
+                                        _device.intvalue = 0;
+                        }
+                        else if (m_pManager->GetValueAsByte(vID, &byteValue) == true)
+                        {
+                                if (byteValue == 0)
+                                        _device.intvalue = 0;
+                                else
+                                        _device.intvalue = 255;
+                        }
+                        InsertDevice(_device);
+
+                }
+
+
+	}
 	else
 	{
 		//Unhandled
@@ -2745,6 +2782,19 @@ void COpenZWave::UpdateValue(const OpenZWave::ValueID &vID)
 			else
 				intValue = 255;
 			pDevice->intvalue = intValue;
+		}
+		else if (commandclass == COMMAND_CLASS_BARRIER)
+		{
+			if (vLabel == "Barrier State Numeric")
+			{
+				int intValue = 0;
+				if (byteValue == 0)
+					intValue = 0;
+				else
+					intValue = 255;
+				pDevice->intvalue = intValue;
+				_log.Log(LOG_STATUS, "GetValue BARRIER CLASS byteValue: %d , Node (0x%02x) , Label: %s", byteValue, NodeID, vLabel.c_str());
+			} 
 		}
 		else if (commandclass == COMMAND_CLASS_ALARM)
 		{

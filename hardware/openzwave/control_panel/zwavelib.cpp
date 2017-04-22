@@ -219,6 +219,8 @@ uint8 cclassNum(char const *str)
 		return 0x62;
 	else if (strcmp(str, "USER CODE") == 0)
 		return 0x63;
+	else if (strcmp(str, "BARRIER OPERATOR") == 0)
+		return 0x66;
 	else if (strcmp(str, "CONFIGURATION") == 0)
 		return 0x70;
 	else if (strcmp(str, "ALARM") == 0)
