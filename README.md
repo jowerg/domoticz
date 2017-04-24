@@ -6,6 +6,8 @@ Domoticz is a Home Automation System that lets you monitor and configure various
 You will need to apply the patch implemented by @srirams as described on:
 https://github.com/OpenZWave/open-zwave/issues/490
 
+This functionality has only be tested using a Linear GD00Z-4 Garage Door Opener. Define your Garage Opener as a "Door Contact" Switch on Domoticz. 
+
 
 ## Multi platform: Linux/Windows/Embedded Devices
 
