@@ -11785,7 +11785,9 @@ bool MainWorker::SwitchLight(const uint64_t idx, const std::string &switchcmd, c
 
 bool MainWorker::SetSetPoint(const std::string &idx, const float TempValue, const int newMode, const std::string &until)
 {
+_log.Log(LOG_NORM, "MainWorker SetSetPoint ....");
 	//Get Device details
+
 	std::vector<std::vector<std::string> > result;
 	result=m_sql.safe_query(
 		"SELECT HardwareID, DeviceID,Unit,Type,SubType,SwitchType,StrParam1 FROM DeviceStatus WHERE (ID == '%q')",
@@ -11851,6 +11853,7 @@ bool MainWorker::SetSetPointInt(const std::vector<std::string> &sd, const float 
 	int hindex=FindDomoticzHardware(HardwareID);
 	if (hindex==-1)
 		return false;
+ _log.Log(LOG_NORM, "SetSetPointInt....");
 
 	unsigned long ID;
 	std::stringstream s_strid;
@@ -12017,6 +12020,7 @@ bool MainWorker::SetSetPointInt(const std::vector<std::string> &sd, const float 
 
 bool MainWorker::SetSetPoint(const std::string &idx, const float TempValue)
 {
+ _log.Log(LOG_NORM, "SetSetPoint id: %s  Value:%.2f", idx.c_str(), TempValue);
 	//Get Device details
 	std::vector<std::vector<std::string> > result;
 	result = m_sql.safe_query(
@@ -13002,8 +13006,11 @@ bool MainWorker::UpdateDevice(const int HardwareID, const std::string &DeviceID,
 		((devType == pTypeRadiator1) && (subType == sTypeSmartwares))
 		)
 	{
-		_log.Log(LOG_NORM, "Sending SetPoint to device....");
-		SetSetPoint(sidx.str(), static_cast<float>(atof(sValue.c_str())));
+		_log.Log(LOG_NORM, "Sending SetPoint to device (via UpdateDevice)....");
+		float tempDest = atof(sValue.c_str());
+		tempDest=ConvertTemperature(tempDest,m_sql.m_tempsign[0]);
+
+		SetSetPoint(sidx.str(), static_cast<float>(tempDest));
 	}
 	else if ((devType == pTypeGeneral) && (subType == sTypeZWaveThermostatMode))
 	{
